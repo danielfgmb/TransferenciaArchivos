@@ -1,7 +1,11 @@
 import java.net.*;
 import java.io.*;
+import java.io.File;
+import java.nio.file.Files;
 
 public class ConexionCliente extends Thread{
+
+    public static final int TAMANO_PAQUETE = 512;
 
     private static int numeroClientes = 0;
 
@@ -13,7 +17,14 @@ public class ConexionCliente extends Thread{
 
     public int idCliente;
 
-    public int progreso;
+    public int numeroByte;
+
+    public int numeroPaquetesTotales;
+
+    public int numeroPaquetesEnviados;
+
+    public byte[] contenidoArchivo;
+
 
     public ConexionCliente(InetAddress direccionCliente, int puertoCliente){
         idCliente = ConexionCliente.asignarIdCliente();
@@ -28,33 +39,53 @@ public class ConexionCliente extends Thread{
         return numeroClientes;
     }
 
+    public byte[] obtenerPaqueteArchivo(){
+
+        byte[] paquete = new byte[TAMANO_PAQUETE + 1];
+
+        byte numeroPaqueteInversoB = (byte) (numeroPaquetesTotales-numeroPaquetesEnviados-TAMANO_PAQUETE);
+
+        paquete[0] = numeroPaqueteInversoB;
+
+        int contador = 0;
+
+        while(numeroByte < contenidoArchivo.length && contador < TAMANO_PAQUETE){
+            paquete[contador+1] = contenidoArchivo[numeroByte];
+            numeroByte+=1;
+            contador+=1;
+        }
+
+        return paquete;
+    }
+
     @Override
     public void run(){
         try {
+
+            File archivo = new File(nombreArchivo);
+
+            contenidoArchivo = Files.readAllBytes(archivo.toPath());
+
+            numeroByte = 0;
+
+            numeroPaquetesEnviados = 0;
+
+            numeroPaquetesTotales = (int) (Math.ceil(contenidoArchivo.length/TAMANO_PAQUETE));
+
             // socket para conexion
             DatagramSocket socket = new DatagramSocket();
 
-            // enviar confirmacion al cliente
-            DatagramPacket confirmacionServidor = new DatagramPacket(new byte[1], 1, direccionCliente, puertoCliente);
-            socket.send(confirmacionServidor);
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            // UDP, inicio ahora ya solo le envía no hay más confirmaciones ni nada
+            while(numeroPaquetesEnviados < numeroPaquetesTotales){
 
-            while(true){
+                // donde se almacena el paquete de archivo
+                byte[] paquete = obtenerPaqueteArchivo();
 
-                // donde se almacena la respuesta
-                byte[] buffer = new byte[512];
-                
-                // se recibe el request
-                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
-                socket.receive(request);
+                // se envia el paquete
+                DatagramPacket request = new DatagramPacket(paquete, paquete.length, direccionCliente, puertoCliente);
+                socket.send(request);
 
-                String peticion = new String(buffer, 0, request.getLength());
-
+                numeroPaquetesEnviados+=1;
             }
 
         } catch (IOException e) {
