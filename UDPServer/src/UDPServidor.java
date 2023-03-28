@@ -5,8 +5,13 @@ public class UDPServidor {
 
     public static int numeroPuerto = 6000;
 
-    
+
     public static void main(String[] args) throws Exception {
+
+        ConexionCliente.setNombreArchivo("C:\\Users\\dgomezba\\Videos\\views\\2022-08-23 19-43-40.mkv");
+        //ConexionCliente.setNombreArchivo("C:\\Users\\dgomezba\\Videos\\2022-08-23 15-48-11.mkv");
+
+        ConexionCliente.leerArchivo();
 
         DatagramSocket socketLlegadaClientes = new DatagramSocket(numeroPuerto);
 

@@ -1,6 +1,6 @@
 import java.net.*;
 import java.io.*;
-import java.io.File;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 
 public class ConexionCliente extends Thread{
@@ -19,15 +19,16 @@ public class ConexionCliente extends Thread{
 
     public int numeroByte;
 
-    public int numeroPaquetesTotales;
+    public static int numeroPaquetesTotales;
 
     public int numeroPaquetesEnviados;
 
-    public byte[] contenidoArchivo;
+    public static byte[] contenidoArchivo;
 
 
     public ConexionCliente(InetAddress direccionCliente, int puertoCliente){
-        idCliente = ConexionCliente.asignarIdCliente();
+        this.direccionCliente = direccionCliente;
+        this.puertoCliente = puertoCliente;
     }
 
     public static synchronized void setNombreArchivo(String pNombreArchivo){
@@ -41,16 +42,21 @@ public class ConexionCliente extends Thread{
 
     public byte[] obtenerPaqueteArchivo(){
 
-        byte[] paquete = new byte[TAMANO_PAQUETE + 1];
+        byte[] paquete = new byte[TAMANO_PAQUETE + 4];
 
-        byte numeroPaqueteInversoB = (byte) (numeroPaquetesTotales-numeroPaquetesEnviados-TAMANO_PAQUETE);
+        int numeroPaqueteInverso = numeroPaquetesTotales-numeroPaquetesEnviados-1;
 
-        paquete[0] = numeroPaqueteInversoB;
+        byte[] inicio = ByteBuffer.allocate(4).putInt(numeroPaqueteInverso).array();
+
+        paquete[0] = inicio[0];
+        paquete[1] = inicio[1];
+        paquete[2] = inicio[2];
+        paquete[3] = inicio[3];
 
         int contador = 0;
 
         while(numeroByte < contenidoArchivo.length && contador < TAMANO_PAQUETE){
-            paquete[contador+1] = contenidoArchivo[numeroByte];
+            paquete[contador+4] = contenidoArchivo[numeroByte];
             numeroByte+=1;
             contador+=1;
         }
@@ -58,19 +64,35 @@ public class ConexionCliente extends Thread{
         return paquete;
     }
 
+    public static void leerArchivo(){
+
+        File archivo = new File(nombreArchivo);
+
+        try {
+            contenidoArchivo = Files.readAllBytes(archivo.toPath());
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        if(contenidoArchivo.length==0){
+            System.out.println("EL ARCHIVO NO SE ENCONTRO O ESTA VACÍO");
+        }
+
+        numeroPaquetesTotales = (int) (Math.ceil( (double) contenidoArchivo.length/TAMANO_PAQUETE));
+    }
+
     @Override
     public void run(){
         try {
 
-            File archivo = new File(nombreArchivo);
-
-            contenidoArchivo = Files.readAllBytes(archivo.toPath());
+            
 
             numeroByte = 0;
 
             numeroPaquetesEnviados = 0;
 
-            numeroPaquetesTotales = (int) (Math.ceil(contenidoArchivo.length/TAMANO_PAQUETE));
+            
 
             // socket para conexion
             DatagramSocket socket = new DatagramSocket();
