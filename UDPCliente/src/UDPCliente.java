@@ -19,7 +19,7 @@ public class UDPCliente extends Thread {
     private int idCliente;
     public static void main(String[] args) throws Exception {        
         // se inicia la cantidad del clientes deseada
-        for(int i=0; i<2; i++){
+        for(int i=0; i<5; i++){
             new UDPCliente(i).start();
         }
     }

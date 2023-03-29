@@ -4,6 +4,8 @@ public class Monitor extends Thread{
 
     public static ArrayList<ConexionCliente> conexiones = new ArrayList<>();
 
+    public static boolean hayEnviosActivos = false;
+
     public static synchronized void registrarConexion(ConexionCliente conexion){
         conexiones.add(conexion);
     }
@@ -27,7 +29,7 @@ public class Monitor extends Thread{
 
             // se da una espera de 200ms para no actualizar siempre
             try {
-                Thread.sleep(200);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -40,20 +42,33 @@ public class Monitor extends Thread{
         if(conexiones.size()==0){
             System.out.print(formatRow("| En espera de solicitudes ...                                   |\n"));
         } else{
-            System.out.print(formatRow("| Transfiriendo archivos ...                                     |\n"));
+            if(hayEnviosActivos)
+                System.out.print(formatRow("| Transfiriendo archivos ...                                     |\n"));
+            else
+                System.out.print(formatRow("| Envíos completados, en espera de solicitudes ...               |\n"));
         }
         System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
         
-        
+        hayEnviosActivos = false;
 
         for(int i=0; i<conexiones.size(); i++){
             ConexionCliente conexion = conexiones.get(i);
             String porcentaje = String.valueOf( Math.ceil(conexion.numeroPaquetesEnviados*100.0/ConexionCliente.numeroPaquetesTotales));
-            int cantidadBarrasProgreso = (int) Math.ceil(((double)conexion.numeroPaquetesEnviados/ConexionCliente.numeroPaquetesTotales))*62;
+            int cantidadBarrasProgreso = (int) ((double)conexion.numeroPaquetesEnviados*62.0/ConexionCliente.numeroPaquetesTotales);
             System.out.print(formatRow(String.format("| Conexión %03d con %-20s          Progreso: %5s |\n",conexion.idCliente,conexion.direccionCliente.getHostAddress()+":"+conexion.puertoCliente, porcentaje)));
-            System.out.print(formatProgress(String.format("| %62s |\n","-".repeat(cantidadBarrasProgreso))));
-            System.out.print(formatRow(String.format("| Paquetes: %-20s                      %10s |\n",conexion.numeroPaquetesEnviados+"/"+ConexionCliente.numeroPaquetesTotales, conexion.totalTime+"ms")));
-            System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
+            System.out.print(formatProgress(String.format("| %-62s |\n","-".repeat(cantidadBarrasProgreso))));
+            if(!conexion.transferenciaCompleta){
+                hayEnviosActivos = true;
+                System.out.print(formatRow(String.format("| Paquetes: %-20s                      %10s |\n",conexion.numeroPaquetesEnviados+"/"+ConexionCliente.numeroPaquetesTotales, conexion.totalTime+"ms")));
+            }
+            else{
+                System.out.print(formatRow(String.format("| Paquetes: %-20s                      %10s |\n","Envio completo", conexion.totalTime+"ms")));       
+            }
+            if(i==conexiones.size()-1)
+                System.out.print(formatDiv("g----------------------------------------------------------------i\n"));
+            else{
+                System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
+            }
         }
 
         System.out.print("\033[1A\033[1A");
