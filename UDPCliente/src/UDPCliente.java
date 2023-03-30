@@ -3,12 +3,12 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Month;
 import java.time.Year;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Scanner;
+
 
 public class UDPCliente extends Thread {
 
@@ -80,19 +80,22 @@ public class UDPCliente extends Thread {
         startTime = System.currentTimeMillis();
 
         try {
+            log("Inicia el Thread para conexión con el servidor del Cliente "+idCliente);
+            
             // saca la dirección del host
             InetAddress direccion = InetAddress.getByName(hostname);
 
             // abre el datagram socket
             DatagramSocket socket = new DatagramSocket();
-
+            log("Cliente "+idCliente+" con direccion IP "+socket.getInetAddress().getHostAddress());
+            log("Conexión con "+hostname+" desde el puerto "+socket.getPort()+" timeout de "+timeout);
             // establece el timeout
             socket.setSoTimeout(timeout);
 
             // se envía la solicitud de conexion
             DatagramPacket request = new DatagramPacket(new byte[1], 1, direccion, puertoServidor);
             socket.send(request);
- 
+            log("Solicitud al servidor ("+hostname+") enviada");
             // se reciben paquetes hasta que finalice el archivo de acuerdo con el numero de paquetes esperados
             while (!termino) {
                 // tamaño de paquete que debe recibir + 4 bytes del número de paquete
@@ -113,6 +116,7 @@ public class UDPCliente extends Thread {
                 paq = ByteBuffer.wrap(numeroPaquete).getInt();
 
                 if(i==0){
+                    
                     puertoServidorConexion = response.getPort();
                     // conociendo el tamaño del paquete, y como el primer paquete es el numero de paquetes total
                     contenido = new byte[TAMANO_PAQUETE*paq];
@@ -121,6 +125,7 @@ public class UDPCliente extends Thread {
                     paquetesEsperados = paq+1;
 
                     estado="Transferencia";
+                    log("Primer paquete recibido, puerto de servidor para envío "+puertoServidorConexion+" paquetes esperados "+paquetesEsperados);
                     
                 }
 
@@ -146,19 +151,37 @@ public class UDPCliente extends Thread {
             }
 
             estado="Termino";
-
+            log("Transferencia con servidor completada, paquetes perdidos "+paqPerdidos);
+            
+            
 
             socket.close();
  
         } catch (SocketTimeoutException ex) {
             
             estado="Timeout";
+            log("TIMEOUT. Transferencia con servidor incompleta, paquetes perdidos "+paqPerdidos+", progreso: "+progreso);
             
         } catch (IOException ex) {
             estado="Error";
+            log("ERROR JAVA. Transferencia con servidor incompleta, paquetes perdidos "+paqPerdidos+", progreso: "+progreso);
+            log(ex.getMessage());
         }
-
+        log("Tiempo total transcurrido: "+tiempoFinal+"ms");
+        long segundoTranscurridos = tiempoFinal/1000;
+        long megaBytesEnviados = 0;
+        if(paqRecibidos>0){
+            megaBytesEnviados = ((paqRecibidos*TAMANO_PAQUETE)/1024/1024)/segundoTranscurridos;
+        }
+        log("Tasa de transferencia final: "+megaBytesEnviados+"MB/s");
         tiempoFinal = System.currentTimeMillis() - startTime;
+
+        if(paqPerdidos == 0){
+            log("ENVIO EXITOSO");
+        }
+        else{
+            log("ENVIO FALLIDO por PAQUETES FALTANTES");
+        }
 
 
         try {

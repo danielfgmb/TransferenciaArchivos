@@ -1,6 +1,5 @@
 import java.net.*;
 import java.util.Scanner;
-import java.io.*;
 
 public class UDPServidor {
 
@@ -33,6 +32,9 @@ public class UDPServidor {
 
                 // se inicia la conexion y se registra en el monitor para poder ver el progreso
                 ConexionCliente conexion = new ConexionCliente(direccionCliente, puertoCliente);
+
+                conexion.log("Request de "+direccionCliente+":"+puertoCliente+" recibida, iniciando conexion.");
+                conexion.log("Asignando ID Cliente "+conexion.idCliente);
                 Monitor.registrarConexion(conexion);
                 conexion.start();
                 
@@ -93,7 +95,7 @@ public class UDPServidor {
         System.out.print(formatRow("| "));
         ConexionCliente.setNombreArchivo(sc.nextLine());
         System.out.print(formatDiv("g----------------------------------------------------------------i\n\n"));    
-        
+        sc.close();
     }
 
 
