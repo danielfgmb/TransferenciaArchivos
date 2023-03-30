@@ -42,6 +42,8 @@ public class UDPCliente extends Thread {
 
     public String estado = "Solicitud";
 
+    public static String extension = "txt";
+
     public long tiempoFinal=0;
 
     public long startTime=0;
@@ -194,14 +196,14 @@ public class UDPCliente extends Thread {
                 // directorio ya existia
             }
             
-            FileOutputStream fos = new FileOutputStream("ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+".txt");
+            FileOutputStream fos = new FileOutputStream("ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+"."+extension);
 
             fos.write(contenido);
             fos.close();
-            log(this,"Archivo escrito exitosamente en ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+".txt");
+            log(this,"Archivo escrito exitosamente en ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+"."+extension);
 
         } catch (IOException e) {
-            log(this,"Error en escritura ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+".txt");
+            log(this,"Error en escritura ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+"."+extension);
             log(this,e.getMessage());
         }
     }
@@ -269,6 +271,7 @@ public class UDPCliente extends Thread {
         puertoServidor = 6000;
         cantidadClientes = 3;
         timeout = 6000;
+        extension="txt";
         Monitor.modoCompatibilidad=true;
     }
 
@@ -318,6 +321,11 @@ public class UDPCliente extends Thread {
 
         System.out.print(formatRow("| Timeout: "));
         timeout=Integer.parseInt(sc.nextLine());
+
+        System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
+
+        System.out.print(formatRow("| Extensión archivo: "));
+        extension=sc.nextLine();
 
         System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
 
