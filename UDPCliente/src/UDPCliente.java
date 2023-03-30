@@ -46,15 +46,15 @@ public class UDPCliente extends Thread {
 
     public long startTime=0;
 
-    public String logFile="";
+    public static String logFile="";
 
     public static void main(String[] args) throws Exception {    
-        // inicio
-        inicio_rapido();
+        inicio();
+        //inicio_rapido();
         new Monitor().start();
         // se inicia la cantidad del clientes deseada
         for(int i=0; i<cantidadClientes; i++){
-            UDPCliente cliente = new UDPCliente(i);
+            UDPCliente cliente = new UDPCliente(i+1);
             Monitor.asignarCliente(cliente);
             cliente.start();
         }
@@ -80,22 +80,23 @@ public class UDPCliente extends Thread {
         startTime = System.currentTimeMillis();
 
         try {
-            log("Inicia el Thread para conexión con el servidor del Cliente "+idCliente);
+            log(this,"Inicia el Thread para conexion con el servidor del Cliente "+idCliente);
             
             // saca la dirección del host
             InetAddress direccion = InetAddress.getByName(hostname);
 
             // abre el datagram socket
             DatagramSocket socket = new DatagramSocket();
-            log("Cliente "+idCliente+" con direccion IP "+socket.getInetAddress().getHostAddress());
-            log("Conexión con "+hostname+" desde el puerto "+socket.getPort()+" timeout de "+timeout);
+            log(this,"Cliente "+idCliente+" con direccion IP "+socket.getLocalSocketAddress());
+            
             // establece el timeout
             socket.setSoTimeout(timeout);
 
             // se envía la solicitud de conexion
             DatagramPacket request = new DatagramPacket(new byte[1], 1, direccion, puertoServidor);
             socket.send(request);
-            log("Solicitud al servidor ("+hostname+") enviada");
+            log(this,"Conexion con "+hostname+" desde el puerto "+socket.getLocalPort()+" timeout de "+timeout);
+            log(this,"Solicitud al servidor ("+hostname+":"+puertoServidor+") enviada");
             // se reciben paquetes hasta que finalice el archivo de acuerdo con el numero de paquetes esperados
             while (!termino) {
                 // tamaño de paquete que debe recibir + 4 bytes del número de paquete
@@ -125,7 +126,7 @@ public class UDPCliente extends Thread {
                     paquetesEsperados = paq+1;
 
                     estado="Transferencia";
-                    log("Primer paquete recibido, puerto de servidor para envío "+puertoServidorConexion+" paquetes esperados "+paquetesEsperados);
+                    log(this,"Primer paquete recibido, puerto de servidor para envio "+puertoServidorConexion+" paquetes esperados "+paquetesEsperados);
                     
                 }
 
@@ -151,7 +152,7 @@ public class UDPCliente extends Thread {
             }
 
             estado="Termino";
-            log("Transferencia con servidor completada, paquetes perdidos "+paqPerdidos);
+            log(this,"Transferencia con servidor completada, paquetes perdidos "+paqPerdidos);
             
             
 
@@ -160,48 +161,52 @@ public class UDPCliente extends Thread {
         } catch (SocketTimeoutException ex) {
             
             estado="Timeout";
-            log("TIMEOUT. Transferencia con servidor incompleta, paquetes perdidos "+paqPerdidos+", progreso: "+progreso);
+            log(this,"TIMEOUT. Transferencia con servidor incompleta, paquetes perdidos "+paqPerdidos+", progreso: "+progreso);
             
         } catch (IOException ex) {
             estado="Error";
-            log("ERROR JAVA. Transferencia con servidor incompleta, paquetes perdidos "+paqPerdidos+", progreso: "+progreso);
-            log(ex.getMessage());
+            log(this,"ERROR JAVA. Transferencia con servidor incompleta, paquetes perdidos "+paqPerdidos+", progreso: "+progreso);
+            log(this,ex.getMessage());
         }
-        log("Tiempo total transcurrido: "+tiempoFinal+"ms");
-        long segundoTranscurridos = tiempoFinal/1000;
-        long megaBytesEnviados = 0;
-        if(paqRecibidos>0){
-            megaBytesEnviados = ((paqRecibidos*TAMANO_PAQUETE)/1024/1024)/segundoTranscurridos;
-        }
-        log("Tasa de transferencia final: "+megaBytesEnviados+"MB/s");
+       
         tiempoFinal = System.currentTimeMillis() - startTime;
+        log(this,"Tiempo total transcurrido: "+tiempoFinal+"ms");
+        long segundoTranscurridos = tiempoFinal/1000;
+        double megaBytesEnviados = 0;
+        if(paqRecibidos>0){
+            megaBytesEnviados = ((paqRecibidos*TAMANO_PAQUETE*1.0)/1024)/segundoTranscurridos;
+        }
+        log(this,"Tasa de transferencia final: "+megaBytesEnviados+"kB/s");
 
-        if(paqPerdidos == 0){
-            log("ENVIO EXITOSO");
+        if(paqPerdidos == 0 && paquetesEsperados>0){
+            log(this,"ENVIO EXITOSO");
         }
         else{
-            log("ENVIO FALLIDO por PAQUETES FALTANTES");
+            log(this,"ENVIO FALLIDO por PAQUETES FALTANTES");
         }
 
 
         try {
             try{
-                Files.createDirectories(Paths.get("/ArchivosRecibidos/"));
+                Files.createDirectories(Paths.get("ArchivosRecibidos/"));
             }
             catch(Exception e){
                 // directorio ya existia
             }
+            
+            FileOutputStream fos = new FileOutputStream("ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+".txt");
 
-            FileOutputStream fos = new FileOutputStream("/ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+".txt");
             fos.write(contenido);
             fos.close();
+            log(this,"Archivo escrito exitosamente en ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+".txt");
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log(this,"Error en escritura ArchivosRecibidos/Cliente"+idCliente+"-Prueba"+cantidadClientes+".txt");
+            log(this,e.getMessage());
         }
     }
 
-    public void log(String log){
+    public static void log(UDPCliente cliente, String log){
         int year = Year.now().getValue();
         Date date = new Date();   
         Calendar calendar = GregorianCalendar.getInstance();
@@ -211,18 +216,20 @@ public class UDPCliente extends Thread {
         int minute = calendar.get(Calendar.MINUTE);
         int hour = calendar.get(Calendar.HOUR_OF_DAY);       
         int month =calendar.get(Calendar.MONTH)+1;  
-        String prefix = year+"-"+month+"-"+day+"-"+hour+"-"+minute+"-"+second;
+        int milisecond = calendar.get(Calendar.MILLISECOND);
+        String prefix = year+"-"+month+"-"+day+"-"+hour+"-"+minute+"-"+second+"-"+milisecond;
 
         if(logFile.equals("")){
             try {
                 try{
-                    Files.createDirectories(Paths.get("/Logs/"));
+                    Files.createDirectories(Paths.get("Logs/"));
                 }
                 catch(Exception e){
                     // si el directorio ya esta creado
+                    
                 }
                 
-                logFile = "/Logs/"+prefix+"-log.txt"; 
+                logFile = "Logs/"+prefix+"-log.txt"; 
                 File file = new File(logFile);
                 file.createNewFile();
             } catch (IOException e) {
@@ -233,7 +240,7 @@ public class UDPCliente extends Thread {
         try {
             BufferedWriter output = new BufferedWriter(new FileWriter(logFile, true));
             output.newLine();
-            output.write("["+prefix+"] "+log);
+            output.write("["+prefix+"]:(Cliente "+cliente.idCliente+") "+log);
             output.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -260,7 +267,7 @@ public class UDPCliente extends Thread {
     public static void inicio_rapido(){
         hostname = "localhost";
         puertoServidor = 6000;
-        cantidadClientes = 10;
+        cantidadClientes = 3;
         timeout = 6000;
         Monitor.modoCompatibilidad=true;
     }

@@ -1,15 +1,31 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.*;
 import java.util.Scanner;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.Year;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
 
 public class UDPServidor {
 
     public static int numeroPuerto;
 
+    public static String logFile="";
+
 
     public static void main(String[] args) throws Exception {
 
-        //inicio();
-        inicio_rapido();
+        inicio();
+        //inicio_rapido();
+
+        log(null, "Se inicio el Servidor UDP en el puerto "+numeroPuerto);
+        log(null, "El nombre del archivo enviado es "+ConexionCliente.nombreArchivo);
 
         ConexionCliente.leerArchivo();
 
@@ -33,8 +49,8 @@ public class UDPServidor {
                 // se inicia la conexion y se registra en el monitor para poder ver el progreso
                 ConexionCliente conexion = new ConexionCliente(direccionCliente, puertoCliente);
 
-                conexion.log("Request de "+direccionCliente+":"+puertoCliente+" recibida, iniciando conexion.");
-                conexion.log("Asignando ID Cliente "+conexion.idCliente);
+                log(conexion,"Request de "+direccionCliente+":"+puertoCliente+" recibida, iniciando conexion.");
+                log(conexion,"Asignando ID Cliente "+conexion.idCliente);
                 Monitor.registrarConexion(conexion);
                 conexion.start();
                 
@@ -118,6 +134,53 @@ public class UDPServidor {
     public static String formatRow(String str)
     {
         return str.replace('|', '\u2502');
+    }
+
+
+    public static void log(ConexionCliente cliente, String log){
+        int year = Year.now().getValue();
+        Date date = new Date();   
+        Calendar calendar = GregorianCalendar.getInstance();
+        calendar.setTime(date); 
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int second = calendar.get(Calendar.SECOND);
+        int minute = calendar.get(Calendar.MINUTE);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);       
+        int month =calendar.get(Calendar.MONTH)+1;  
+        int milisecond = calendar.get(Calendar.MILLISECOND);
+        String prefix = year+"-"+month+"-"+day+"-"+hour+"-"+minute+"-"+second+"-"+milisecond;
+
+        if(logFile.equals("")){
+            try {
+                try{
+                    Files.createDirectories(Paths.get("Logs/"));
+                }
+                catch(Exception e){
+                    // si el directorio ya esta creado
+                    
+                }
+                
+                logFile = "Logs/"+prefix+"-log.txt"; 
+                File file = new File(logFile);
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            BufferedWriter output = new BufferedWriter(new FileWriter(logFile, true));
+            output.newLine();
+            if(cliente!=null){
+                output.write("["+prefix+"]:(Cliente "+cliente.idCliente+") "+log);
+            }else{
+                output.write("["+prefix+"]: "+log);
+            }
+            output.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }
 

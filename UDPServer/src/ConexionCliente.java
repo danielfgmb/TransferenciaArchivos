@@ -2,12 +2,6 @@ import java.net.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.Year;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-
 public class ConexionCliente extends Thread{
 
     public static final int TAMANO_PAQUETE = 512;
@@ -38,7 +32,7 @@ public class ConexionCliente extends Thread{
 
     public boolean transferenciaCompleta;
 
-    public String logFile;
+   
 
 
     public ConexionCliente(InetAddress direccionCliente, int puertoCliente){
@@ -120,13 +114,21 @@ public class ConexionCliente extends Thread{
 
             // socket para conexion
             DatagramSocket socket = new DatagramSocket();
-            log("Se abre socket para envío a cliente en puerto "+socket.getPort());
+            UDPServidor.log(this,"Se abre socket para envío a cliente en puerto "+socket.getPort());
 
 
             // UDP, inicio ahora ya solo le envía no hay más confirmaciones ni nada
-            log("Comienza el envío del archivo "+nombreArchivo+"se envía en chunks de "+TAMANO_PAQUETE);
-            log("El archivo pesa "+contenidoArchivo.length+"bytes y se envía al usuario en "+numeroPaquetesTotales);
+            UDPServidor.log(this,"Comienza el envío del archivo "+nombreArchivo+"se envía en chunks de "+TAMANO_PAQUETE);
+            UDPServidor.log(this,"El archivo pesa "+contenidoArchivo.length+"bytes y se envía al usuario en "+numeroPaquetesTotales);
             while(numeroPaquetesEnviados < numeroPaquetesTotales){
+                //SI SE QUIERE ASEGURAR TRANSFERENCIA
+                /*
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }*/
 
                 // donde se almacena el paquete de archivo
                 byte[] paquete = obtenerPaqueteArchivo();
@@ -142,7 +144,8 @@ public class ConexionCliente extends Thread{
                 totalTime = currentTime - startTime;
             }
 
-            log("Envío del archivo completado, tiempo total transcurrido "+totalTime+"ms");
+            UDPServidor.log(this,"Envío del archivo completado, tiempo total transcurrido "+totalTime+"ms");
+
             transferenciaCompleta = true;
 
            
@@ -154,43 +157,6 @@ public class ConexionCliente extends Thread{
         }
     }
 
-    public void log(String log){
-        int year = Year.now().getValue();
-        Date date = new Date();   
-        Calendar calendar = GregorianCalendar.getInstance();
-        calendar.setTime(date); 
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        int second = calendar.get(Calendar.SECOND);
-        int minute = calendar.get(Calendar.MINUTE);
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);       
-        int month =calendar.get(Calendar.MONTH)+1;  
-        String prefix = year+"-"+month+"-"+day+"-"+hour+"-"+minute+"-"+second;
-
-        if(logFile.equals("")){
-            try {
-                try{
-                    Files.createDirectories(Paths.get("/Logs/"));
-                }
-                catch(Exception e){
-                    // si el directorio ya esta creado
-                }
-                
-                logFile = "/Logs/"+prefix+"-log.txt"; 
-                File file = new File(logFile);
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        try {
-            BufferedWriter output = new BufferedWriter(new FileWriter(logFile, true));
-            output.newLine();
-            output.write("["+prefix+"] "+log);
-            output.close();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+    
+    
 }

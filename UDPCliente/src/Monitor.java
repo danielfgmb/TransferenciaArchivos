@@ -67,7 +67,7 @@ public class Monitor extends Thread{
 
             if(cliente.estado.equals("Transferencia")){
                 hayEnviosActivos = true;
-                System.out.print(formatRow(String.format("| Paquetes Perdidos: %-20s                 Activa  |\n",cliente.paqPerdidos+" "+ porcentajePerdida)));
+                System.out.print(formatRow(String.format("| Paquetes Perdidos: %-20s                 Activa |\n",cliente.paqPerdidos+" "+ porcentajePerdida)));
             }
             else if(cliente.estado.equals("Solicitud")){
                 System.out.print(formatRow(String.format("| Solicitud de conexión enviada ...                              |\n")));
