@@ -52,6 +52,8 @@ public class UDPServidor {
                 log(conexion,"Request de "+direccionCliente+":"+puertoCliente+" recibida, iniciando conexion.");
                 log(conexion,"Asignando ID Cliente "+conexion.idCliente);
                 Monitor.registrarConexion(conexion);
+
+                Thread.sleep(100);
                 conexion.start();
                 
 
