@@ -6,6 +6,8 @@ public class Monitor extends Thread{
 
     public static boolean hayEnviosActivos = false;
 
+    public static boolean modoCompatibilidad = false;
+
     public static synchronized void registrarConexion(ConexionCliente conexion){
         conexiones.add(conexion);
     }
@@ -38,16 +40,26 @@ public class Monitor extends Thread{
 
     public static void darEstadoEnvios(){
 
+        if(modoCompatibilidad){
+
+            System.out.print("\n".repeat(50));
+            System.out.print(formatDiv("a----------------------------------------------------------------c\n"));
+            System.out.print(formatRow("| ESTADO SERVIDOR                                                |\n"));
+            System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
+        }
+
         
         if(conexiones.size()==0){
             System.out.print(formatRow("| En espera de solicitudes ...                                   |\n"));
+            System.out.print(formatDiv("g----------------------------------------------------------------i\n"));
         } else{
             if(hayEnviosActivos)
                 System.out.print(formatRow("| Transfiriendo archivos ...                                     |\n"));
             else
                 System.out.print(formatRow("| Envíos completados, en espera de solicitudes ...               |\n"));
+            System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
         }
-        System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
+        
         
         hayEnviosActivos = false;
 
@@ -70,11 +82,13 @@ public class Monitor extends Thread{
                 System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
             }
         }
-
-        System.out.print("\033[1A\033[1A");
-        for(int i=0; i<conexiones.size(); i++){
-            System.out.print("\033[1A\033[1A\033[1A\033[1A");
+        if(!modoCompatibilidad){
+            System.out.print("\033[1A\033[1A");
+            for(int i=0; i<conexiones.size(); i++){
+                System.out.print("\033[1A\033[1A\033[1A\033[1A");
+            }
         }
+        
             
     }
 

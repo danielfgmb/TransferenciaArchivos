@@ -9,9 +9,8 @@ public class UDPServidor {
 
     public static void main(String[] args) throws Exception {
 
-        inicio();
-
-        numeroPuerto = 6000;
+        //inicio();
+        inicio_rapido();
 
         ConexionCliente.leerArchivo();
 
@@ -49,6 +48,8 @@ public class UDPServidor {
 
     public static void inicio_rapido(){
         ConexionCliente.setNombreArchivo("C:\\Users\\dgomezba\\Videos\\views\\2022-08-23 19-43-40.mkv");
+        Monitor.modoCompatibilidad=true;
+        numeroPuerto = 6000;
         //ConexionCliente.setNombreArchivo("C:\\Users\\dgomezba\\Videos\\2022-08-23 15-48-11.mkv");
     }
 
@@ -59,9 +60,11 @@ public class UDPServidor {
         header += formatRow("|              Implementación de Servidores TCP y UDP            |\n");
         header += formatRow("|                     Profesor: Yezid Donoso                     |\n");
         header += formatRow("|                 Asistente Graduado: Nicolás Segura             |\n");
-        header += formatDiv("d-------------------------------------b--------------------------f\n");
-        header += formatRow("|               GRUPO 1               |         SECCION 5        |\n");
-        header += formatDiv("g-------------------------------------h--------------------------i\n");     
+        header += formatDiv("d----------------------------------------------------------------f\n");
+        header += formatRow("|                          SERVIDOR UDP                          |\n");
+        header += formatDiv("d--------------------------------b-------------------------------f\n");
+        header += formatRow("|           GRUPO 1              |           SECCION 5           |\n");
+        header += formatDiv("g--------------------------------h-------------------------------i\n");     
         System.out.println(header);
 
         String datos = "";
@@ -74,6 +77,16 @@ public class UDPServidor {
         System.out.print(formatRow("| Puerto Conexiones Entrantes Servidor:  "));
         Scanner sc = new Scanner(System.in);
         numeroPuerto = Integer.parseInt(sc.nextLine());
+        System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
+
+        System.out.print(formatRow("|                   Modo compatibilidad mensajes                 |\n"));
+        System.out.print(formatRow("|        (activar cuando los progresos no se ven correctamente)  |\n"));
+        System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
+        System.out.print(formatRow("| (S/N): "));
+        String compat = sc.nextLine();
+        if(compat.equals("S")){
+            Monitor.modoCompatibilidad=true;
+        }
         System.out.print(formatDiv("d----------------------------------------------------------------f\n"));
 
         System.out.print(formatRow("| Dirección absoluta archivo transmisión:                        |\n"));
