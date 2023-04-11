@@ -16,7 +16,7 @@ foo@bar:~$ sudo java -jar UDPServer.jar
 ```
 Consideraciones para usuarios de Windows: Los puertos UDP están bloqueados por defecto así que para probar el programa puede ser necesario deshabilitar el Firewall. En este link encuentra información https://support.microsoft.com/en-us/windows/turn-microsoft-defender-firewall-on-or-off-ec0844f7-aebd-0583-67fe-601ecf5d774f
 
-## Transferencia por UDP
+## Transferencia por TCP
 
 Se necesitan los siguientes paquetes de Python para el cliente y servidor.
 
